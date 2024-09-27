@@ -23,6 +23,7 @@ import { allDistict } from "@bangladeshi/bangladesh-address";
 import FXTextarea from "@/src/components/form/FXTextArea";
 import { AddIcon, TrashIcon } from "@/src/assets/icons";
 import { useRouter } from "next/navigation";
+import generateDescription from "@/src/services/ImageDescreption";
 
 const cityOptions = allDistict()
   .sort()
@@ -34,6 +35,8 @@ const cityOptions = allDistict()
 export default function CreatePost() {
   const [imageFiles, setImageFiles] = useState<File[] | []>([]);
   const [imagePreviews, setImagePreviews] = useState<string[] | []>([]);
+  const [isLoading, setIsloading] = useState(false);
+  const [error, setError] = useState("");
 
   const router = useRouter();
 
@@ -107,6 +110,22 @@ export default function CreatePost() {
       };
 
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDescriptionGeneration = async () => {
+    setIsloading(true);
+    try {
+      const respose = await generateDescription(
+        imagePreviews[0],
+        "Write a description for social media post describing the given image that starts with 'Found This..' "
+      );
+      methods.setValue("description", respose);
+      setIsloading(false);
+    } catch (error : any) {
+      console.log(error);
+      setError(error?.message)
+      setIsloading(false);
     }
   };
 
@@ -186,7 +205,22 @@ export default function CreatePost() {
                 <FXTextarea label="Description" name="description" />
               </div>
             </div>
-
+            <div className="flex justify-end gap-5 ">
+             {
+              methods.getValues("description") && (
+                <Button onClick={() => methods.resetField("description")}>Clear</Button>
+              )
+             }
+              <Button
+                isDisabled={imagePreviews.length > 0 ? false : true}
+                isLoading={isLoading}
+                onClick={() => handleDescriptionGeneration()}
+              >
+               {
+                isLoading ? "Generating" : " Generate with AI"
+               }
+              </Button>
+            </div>
             <Divider className="my-5" />
 
             <div className="flex justify-between items-center mb-5">

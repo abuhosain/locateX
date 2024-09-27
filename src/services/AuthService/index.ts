@@ -1,8 +1,9 @@
 "use server";
-
+ 
 import axiousInstance from "@/src/lib";
+ 
 import { jwtDecode } from "jwt-decode";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { FieldValues } from "react-hook-form";
 
 export const registerUser = async (userData: FieldValues) => {
@@ -34,8 +35,7 @@ export const loginUser = async (userData: FieldValues) => {
 export const logOut = () => {
   cookies().delete("accessToken");
   cookies().delete("refreshToken");
-}
-
+};
 
 export const getCurrentUser = async () => {
   const accessToken = cookies().get("accessToken")?.value;
@@ -49,8 +49,25 @@ export const getCurrentUser = async () => {
       mobileNumber: decodedToken.mobileNumber,
       role: decodedToken.role,
       status: decodedToken.status,
-      profilePhoto : decodedToken.profilePhoto
+      profilePhoto: decodedToken.profilePhoto,
     };
   }
   return decodedToken;
+};
+
+export const getNewAccessToken = async () => {
+  try {
+    const refreshToken = cookies().get("refreshToekn")?.value;
+    const res = await axiousInstance({
+      url: "/auth/refresh-token",
+      method: "POST",
+      withCredentials : true,
+      headers : {
+        cookies : `refreshToken-=${refreshToken}`
+      }
+    });
+    return res.data;
+  } catch (error) {
+    throw new Error("Failed to get new access token");
+  }
 };
